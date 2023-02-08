@@ -1,40 +1,32 @@
 resource "aws_instance" "webserver" {
-    ami           =  "ami-0b752bf1df193a6c4"
-    instance_type =  "t2.micro"
+    ami           =  var.image_id
+    instance_type =  var.instance_type
     user_data = file("./scripts/install_httpd.sh")
 
     vpc_security_group_ids = [aws_security_group.webserver_sg.id]
-    tags = {
-      Name = "Webserver"
-      ENV = "Dev"
-    }
+    tags = var.custom_tags
 }
 
 resource "aws_security_group" "webserver_sg" {
   name        = "webserver SG"
   description = "Allow TLS inbound traffic"
 
-  ingress {
-    description      = "Webserver Port"
-    from_port        = 80
-    to_port          = 80
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description      = "SSH Port"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
+  dynamic "ingress" {
+		iterator = port
+		for_each = var.server_ports
+						content {
+							from_port   = port.value
+							to_port     = port.value
+							protocol    = "tcp"
+							cidr_blocks = [var.destination_cidr]
+			}
+	}
 
   egress {
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = [var.destination_cidr]
     ipv6_cidr_blocks = ["::/0"]
   }
 
