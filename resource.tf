@@ -1,10 +1,33 @@
+data "aws_ami" "aws_linux_2_latest" {
+  most_recent = true
+  owners      = ["amazon"]
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 resource "aws_instance" "webserver" {
-    ami           =  var.image_id
+    count         =  3
+    ami           =  data.aws_ami.aws_linux_2_latest.id
     instance_type =  var.instance_type
     user_data = file("./scripts/install_httpd.sh")
 
     vpc_security_group_ids = [aws_security_group.webserver_sg.id]
-    tags = var.custom_tags
+    tags = {
+      Name = "${var.custom_tags["Name"]}-${var.environments[count.index]}"
+      ENV = var.environments[count.index]
+    }
 }
 
 resource "aws_security_group" "webserver_sg" {

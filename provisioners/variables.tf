@@ -8,8 +8,8 @@ variable "instance_type" {
 }
 
 variable "server_ports" {
-  type    = list
-  default = [22,80,8080]
+  type    = list(any)
+  default = [22, 80]
 }
 
 variable "destination_cidr" {
@@ -24,7 +24,6 @@ variable "custom_tags" {
   }
 }
 
-variable "environments" {
-  type    = list
-  default = ["Dev","Staging","Prod"]
+output "webserver_public_ip" {
+  value = aws_instance.webserver.public_ip
 }
